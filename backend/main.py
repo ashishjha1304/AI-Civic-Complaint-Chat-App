@@ -1,7 +1,4 @@
-import warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='langchain_core')
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -63,12 +60,8 @@ async def chat_endpoint(request: ChatRequest):
 @app.post("/reset")
 async def reset_session():
     """Reset the session for a new complaint"""
-    try:
-        from database import reset_session
-        reset_session("default")
-        return {"status": "success", "message": "Session reset successfully"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    # Simple session reset - no database for now
+    return {"status": "success", "message": "Session reset successfully"}
 
 
 @app.get("/health")
