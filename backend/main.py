@@ -64,6 +64,22 @@ async def reset_session():
     return {"status": "success", "message": "Session reset successfully"}
 
 
+@app.get("/")
+async def root():
+    """Root endpoint with API information"""
+    return {
+        "message": "AI Civic Complaint Assistant API",
+        "version": "1.0.0",
+        "status": "running",
+        "endpoints": {
+            "GET /": "API information",
+            "GET /health": "Health check",
+            "POST /chat": "Chat with AI assistant",
+            "POST /reset": "Reset conversation session"
+        },
+        "docs": "/docs"  # FastAPI automatic docs
+    }
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
