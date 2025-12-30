@@ -28,7 +28,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5177",
         "http://127.0.0.1:5177",
-        "https://frontend-jot535bw0-ashish-jhas-projects-ff68ec28.vercel.app",  # Latest Vercel frontend
+        "https://frontend-9zetcjjb1-ashish-jhas-projects-ff68ec28.vercel.app",  # Latest Vercel frontend
+        "https://frontend-jot535bw0-ashish-jhas-projects-ff68ec28.vercel.app",
         "https://frontend-evhyg3lgp-ashish-jhas-projects-ff68ec28.vercel.app",
         "https://frontend-g4pbykyuo-ashish-jhas-projects-ff68ec28.vercel.app"
     ],
