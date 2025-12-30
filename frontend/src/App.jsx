@@ -59,7 +59,8 @@ function App() {
 
   const resetComplaint = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/reset`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-civic-complaint-backend.onrender.com'
+      await fetch(`${baseUrl}/reset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +114,12 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: category }])
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/chat`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-civic-complaint-backend.onrender.com'
+      const apiUrl = `${baseUrl}/chat`
+      console.log('API URL:', apiUrl)
+      console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +168,8 @@ function App() {
     }])
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/chat`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-civic-complaint-backend.onrender.com'
+      const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -211,7 +218,8 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/chat`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-civic-complaint-backend.onrender.com'
+      const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
