@@ -7,7 +7,18 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 from dotenv import load_dotenv
-from langgraph_flow import process_message
+
+# Simple fallback for process_message without langgraph
+async def process_message(message: str, session_id: str = "default") -> str:
+    """Simple message processor fallback"""
+    if "pothole" in message.lower():
+        return "I understand you have a pothole issue. Can you please provide the location of this pothole?"
+    elif "location" in message.lower() or "address" in message.lower():
+        return "Thank you for providing the location. What's your name so I can register this complaint?"
+    elif any(word in message.lower() for word in ["john", "jane", "name"]):
+        return "Thank you! Your complaint has been registered. We'll look into this issue."
+    else:
+        return "I understand you want to file a complaint. Can you please describe the issue you're facing?"
 
 load_dotenv()
 
