@@ -16,7 +16,12 @@ app = FastAPI()
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5177", "http://127.0.0.1:5177"],  # Vite dev ports
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5177",
+        "http://127.0.0.1:5177",
+        "https://frontend-qo6umkvgv-ashish-jhas-projects-ff68ec28.vercel.app"  # Vercel frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
