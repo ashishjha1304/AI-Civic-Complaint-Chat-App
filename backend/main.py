@@ -31,7 +31,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5177",
         "http://127.0.0.1:5177",
-        "https://frontend-qo6umkvgv-ashish-jhas-projects-ff68ec28.vercel.app"  # Vercel frontend
+        "https://frontend-g4pbykyuo-ashish-jhas-projects-ff68ec28.vercel.app"  # Vercel frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
