@@ -31,9 +31,10 @@ app.add_middleware(
         "https://frontend-9zetcjjb1-ashish-jhas-projects-ff68ec28.vercel.app",  # Latest Vercel frontend
         "https://frontend-jot535bw0-ashish-jhas-projects-ff68ec28.vercel.app",
         "https://frontend-evhyg3lgp-ashish-jhas-projects-ff68ec28.vercel.app",
-        "https://frontend-g4pbykyuo-ashish-jhas-projects-ff68ec28.vercel.app"
+        "https://frontend-g4pbykyuo-ashish-jhas-projects-ff68ec28.vercel.app",
+        "https://*.vercel.app",  # Allow all Vercel deployments
     ],
-    allow_credentials=True,
+    allow_credentials=False,  # Changed to False to allow wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
 )
