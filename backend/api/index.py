@@ -114,6 +114,3 @@ async def root():
 async def health_check():
     return {"status": "ok", "version": "1.0.0"}
 
-# Export for Vercel
-app = app
-
