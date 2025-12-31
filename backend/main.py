@@ -86,6 +86,36 @@ async def chat_test_endpoint(request: ChatRequest):
         return ChatResponse(reply="Test endpoint error")
 
 
+@app.post("/submit-complaint")
+async def submit_complaint_endpoint(complaint_data: dict):
+    """Submit a complete complaint to the database"""
+    try:
+        from database import save_complaint, validate_complaint_data
+
+        print(f"[SUBMIT] Received complaint submission: {complaint_data}")
+
+        # Validate the complaint data
+        is_valid, validation_results = validate_complaint_data(complaint_data)
+
+        if not is_valid:
+            print("[VALIDATION FAILED] Complaint data validation failed")
+            return {"success": False, "error": "Validation failed", "details": validation_results}
+
+        # Save to database
+        result = save_complaint(complaint_data)
+
+        if result:
+            print("[SUCCESS] Complaint submitted successfully")
+            return {"success": True, "message": "Complaint submitted successfully"}
+        else:
+            print("[ERROR] Failed to save complaint to database")
+            return {"success": False, "error": "Database save failed"}
+
+    except Exception as e:
+        print(f"[ERROR] Exception in submit_complaint_endpoint: {e}")
+        return {"success": False, "error": str(e)}
+
+
 @app.post("/reset")
 async def reset_session():
     """Reset the session for a new complaint"""

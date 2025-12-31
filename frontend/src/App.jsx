@@ -14,12 +14,12 @@ function App() {
 
   // Form state for step-by-step input
   const [currentStep, setCurrentStep] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const [formData, setFormData] = useState({
     description: '',
-    location: '',
     name: '',
-    email: '',
-    phone: ''
+    mobile_number: '',
+    email: ''
   })
 
   const messagesEndRef = useRef(null)
@@ -75,12 +75,12 @@ function App() {
       setShowCategorySelection(true)
       setCurrentStep(null)
       setComplaintCompleted(false)
+      setSelectedCategory(null)
       setFormData({
         description: '',
-        location: '',
         name: '',
-        email: '',
-        phone: ''
+        mobile_number: '',
+        email: ''
       })
       setInput('')
       sessionId.current = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -95,12 +95,12 @@ function App() {
       setShowCategorySelection(true)
       setCurrentStep(null)
       setComplaintCompleted(false)
+      setSelectedCategory(null)
       setFormData({
         description: '',
-        location: '',
         name: '',
-        email: '',
-        phone: ''
+        mobile_number: '',
+        email: ''
       })
       setInput('')
       sessionId.current = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -132,7 +132,8 @@ function App() {
 
       const data = await response.json()
 
-      // Immediately move to description step and show acknowledgment
+      // Store the selected category and immediately move to description step
+      setSelectedCategory(category)
       setShowCategorySelection(false)
       setCurrentStep('description')
 
@@ -154,14 +155,30 @@ function App() {
   const handleFormSubmit = async (field, value) => {
     if (loading || (field !== 'contact' && !value.trim())) return
 
+    // Basic validation
+    if (field === 'email' && value && !value.includes('@')) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Please provide a valid email address that includes the "@" symbol.'
+      }])
+      return
+    }
+
+    if (field === 'mobile_number' && (!value || value.trim().length < 3)) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Please provide a valid mobile number with at least 3 digits.'
+      }])
+      return
+    }
+
     setLoading(true)
 
     const fieldLabels = {
       description: 'Brief explanation',
-      location: 'Location',
       name: 'Name',
-      email: 'Email',
-      phone: 'Phone'
+      mobile_number: 'Mobile number',
+      email: 'Email address'
     }
 
     // Add user response to chat
@@ -169,6 +186,9 @@ function App() {
       role: 'user',
       content: `${fieldLabels[field]}: ${value}`
     }])
+
+    // Store the value
+    setFormData(prev => ({ ...prev, [field]: value }))
 
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -189,8 +209,8 @@ function App() {
 
       const data = await response.json()
 
-      // Advance to next step immediately (don't wait for backend response)
-      const steps = ['description', 'location', 'name']
+      // Advance to next step immediately
+      const steps = ['description', 'name', 'mobile_number', 'email']
       const currentIndex = steps.indexOf(currentStep)
 
       if (currentIndex < steps.length - 1) {
@@ -205,17 +225,10 @@ function App() {
         }])
       } else {
         // Final step - submit complaint
-        setCurrentStep(null)
-        setComplaintCompleted(true)
-        setShowCategorySelection(false)
-
-        // Add success message
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: "Thank you! Your complaint has been recorded and submitted. We will look into this issue and get back to you soon."
-        }])
+        await submitComplaint()
       }
 
+      // Clear the form field
       setFormData(prev => ({ ...prev, [field]: '' }))
     } catch (error) {
       console.error('Error:', error)
@@ -228,11 +241,62 @@ function App() {
     }
   }
 
+  // Submit complaint to database
+  const submitComplaint = async () => {
+    try {
+      const complaintData = {
+        citizen_name: formData.name,
+        email: formData.email,
+        mobile_number: formData.mobile_number,
+        issue_type: getSelectedCategoryValue(),
+        complaint_description: formData.description
+      }
+
+      // Send to backend for database insertion
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const response = await fetch(`${baseUrl}/submit-complaint`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...complaintData,
+          session_id: sessionId.current
+        }),
+      })
+
+      if (response.ok) {
+        setCurrentStep(null)
+        setComplaintCompleted(true)
+        setShowCategorySelection(false)
+
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "Thank you! Your complaint has been recorded successfully. Our team will review it and get back to you."
+        }])
+      } else {
+        throw new Error('Failed to submit complaint')
+      }
+    } catch (error) {
+      console.error('Error submitting complaint:', error)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, there was an error submitting your complaint. Please try again.'
+      }])
+    }
+  }
+
+  // Get the selected category value
+  const getSelectedCategoryValue = () => {
+    return selectedCategory || 'road/traffic issues' // Fallback for safety
+  }
+
   // Helper function to get the next question prompt
   const getNextQuestionPrompt = (nextStep) => {
     const prompts = {
-      location: "Now, please provide the location where this issue is occurring.",
-      name: "Finally, please provide your name so we can register this complaint."
+      name: "Now, please provide your full name.",
+      mobile_number: "Next, please provide your mobile number.",
+      email: "Finally, please provide your email address."
     }
     return prompts[nextStep] || ""
   }
@@ -593,36 +657,72 @@ function App() {
                     </div>
                   )}
 
-                  {currentStep === 'location' && (
+                  {currentStep === 'mobile_number' && (
                     <div className="space-y-4 sm:space-y-6">
                       <div className="text-center mb-6 sm:mb-8">
                         <div className="relative inline-block mb-4">
                           <div className="absolute inset-0 bg-cyan-200 rounded-full blur-xl opacity-50"></div>
                           <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-100 to-blue-100 shadow-lg">
-                            <span className="text-3xl">📍</span>
+                            <span className="text-3xl">📱</span>
                           </div>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Location</h3>
-                        <p className="text-sm text-gray-600 font-medium">Where is this issue located? (at least 3 characters)</p>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Mobile Number</h3>
+                        <p className="text-sm text-gray-600 font-medium">Please provide your mobile number</p>
                       </div>
                       <input
-                        type="text"
-                        value={formData.location}
-                        onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                        placeholder="e.g., 123 Main Street or Downtown Area"
+                        type="tel"
+                        value={formData.mobile_number}
+                        onChange={(e) => setFormData(prev => ({ ...prev, mobile_number: e.target.value }))}
+                        placeholder="e.g., +1234567890 or 1234567890"
                         disabled={loading}
                         className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                       />
               <button
-                        onClick={() => handleFormSubmit('location', formData.location)}
-                        disabled={loading || formData.location.length < 3}
+                        onClick={() => handleFormSubmit('mobile_number', formData.mobile_number)}
+                        disabled={loading || !formData.mobile_number.trim()}
                         className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
               >
                         <span className="relative z-10 flex items-center justify-center gap-2">
-                          <span>Continue to Your Name</span>
+                          <span>Continue to Email</span>
                           <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+                    </div>
+                  )}
+
+                  {currentStep === 'email' && (
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="text-center mb-6 sm:mb-8">
+                        <div className="relative inline-block mb-4">
+                          <div className="absolute inset-0 bg-purple-200 rounded-full blur-xl opacity-50"></div>
+                          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 shadow-lg">
+                            <span className="text-3xl">📧</span>
+                          </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Email Address</h3>
+                        <p className="text-sm text-gray-600 font-medium">Please provide your email address</p>
+                      </div>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="e.g., your.email@example.com"
+                        disabled={loading}
+                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
+                      />
+              <button
+                        onClick={() => handleFormSubmit('email', formData.email)}
+                        disabled={loading || !formData.email.trim() || !formData.email.includes('@')}
+                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+              >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Submit Complaint</span>
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
