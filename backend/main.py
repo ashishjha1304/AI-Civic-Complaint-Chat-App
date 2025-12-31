@@ -21,23 +21,24 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORS middleware
+# CORS middleware - Simplified approach
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5177",
-        "http://127.0.0.1:5177",
-        "https://frontend-9zetcjjb1-ashish-jhas-projects-ff68ec28.vercel.app",  # Latest Vercel frontend
-        "https://frontend-jot535bw0-ashish-jhas-projects-ff68ec28.vercel.app",
-        "https://frontend-evhyg3lgp-ashish-jhas-projects-ff68ec28.vercel.app",
-        "https://frontend-g4pbykyuo-ashish-jhas-projects-ff68ec28.vercel.app",
-        "https://*.vercel.app",  # Allow all Vercel deployments
-    ],
-    allow_credentials=False,  # Changed to False to allow wildcard origins
-    allow_methods=["*"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Additional CORS headers for all responses
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "false"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 
 class ChatRequest(BaseModel):
@@ -59,6 +60,31 @@ async def chat_endpoint(request: ChatRequest):
         print(f"Error in chat endpoint: {e}")
         print(traceback.format_exc())
         return ChatResponse(reply="Sorry, I encountered an error. Please try again or start a new complaint.")
+
+# CORS test endpoint - bypasses CORS middleware
+@app.options("/chat")
+async def chat_options():
+    return {"message": "CORS preflight handled"}
+
+@app.post("/chat-test")
+async def chat_test_endpoint(request: ChatRequest):
+    """Test endpoint that explicitly sets CORS headers"""
+    try:
+        reply = await process_message(request.message, request.session_id)
+        response = ChatResponse(reply=reply)
+        # Manually add CORS headers
+        response.__dict__.update({
+            "access_control_allow_origin": "*",
+            "access_control_allow_credentials": "false",
+            "access_control_allow_methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "access_control_allow_headers": "*"
+        })
+        return response
+    except Exception as e:
+        import traceback
+        print(f"Error in test endpoint: {e}")
+        print(traceback.format_exc())
+        return ChatResponse(reply="Test endpoint error")
 
 
 @app.post("/reset")
