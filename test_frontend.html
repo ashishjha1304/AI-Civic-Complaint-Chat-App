@@ -17,8 +17,8 @@
 </head>
 <body>
     <h1>AI Civic Complaint Assistant - Working Demo</h1>
-    <p><strong>Backend Status:</strong> ✅ Running on Render</p>
-    <p><strong>API URL:</strong> https://ai-civic-complaint-backend.onrender.com</p>
+    <p><strong>Backend Status:</strong> ✅ Running locally</p>
+    <p><strong>API URL:</strong> http://localhost:8000</p>
 
     <div class="chat-container">
         <div id="messages">
@@ -33,7 +33,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://ai-civic-complaint-backend.onrender.com';
+        const API_BASE_URL = 'http://localhost:8000';
 
         async function sendMessage() {
             const input = document.getElementById('messageInput');

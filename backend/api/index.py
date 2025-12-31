@@ -21,10 +21,10 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORS middleware - Production ready configuration
+# CORS middleware - Local development configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-bm20j7ncd-ashish-jhas-projects-ff68ec28.vercel.app"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -34,7 +34,7 @@ app.add_middleware(
 @app.middleware("http")
 async def add_cors_headers(request, call_next):
     response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "https://frontend-bm20j7ncd-ashish-jhas-projects-ff68ec28.vercel.app"
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
     response.headers["Access-Control-Allow-Credentials"] = "false"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "*"

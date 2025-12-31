@@ -14,72 +14,66 @@ An AI-powered complaint management system that helps citizens file complaints by
 ## Tech Stack
 
 - **Frontend**: React + Vite
-- **Backend**: Python + FastAPI + LangGraph
+- **Backend**: Python + FastAPI
 - **Database**: Supabase (PostgreSQL)
 
-## Setup Instructions
+## Quick Start
+
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- Supabase account (free tier works)
 
 ### Backend Setup
 
-1. Navigate to the backend directory:
+1. Navigate to the backend directory and install dependencies:
 ```bash
 cd backend
-```
-
-2. Create a virtual environment:
-```bash
 python -m venv venv
-```
-
-3. Activate the virtual environment:
-- Windows: `venv\Scripts\activate`
-- Linux/Mac: `source venv/bin/activate`
-
-4. Install dependencies:
-```bash
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-5. Create a `.env` file in the backend directory:
+2. (Optional) Configure Supabase for data persistence:
+   - Create a Supabase project at https://supabase.com
+   - Create a `.env` file with your credentials:
 ```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-WEBHOOK_URL=your_webhook_url
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
 ```
 
-6. Set up Supabase:
-   - Create a new Supabase project
-   - Create a table named `complaints` with the following columns:
-     - `id` (uuid, primary key, default: gen_random_uuid())
-     - `citizen_name` (text)
-     - `location` (text)
-     - `complaint_description` (text)
-     - `issue_type` (text)
-     - `created_at` (timestamp, default: now())
-
-7. Run the backend server:
+3. Start the backend server:
 ```bash
-uvicorn main:app --reload --port 8000
+python run.py
+# or
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+Backend will run on `http://localhost:8000`
 
 ### Frontend Setup
 
-1. Navigate to the frontend directory:
+1. Navigate to the frontend directory and install dependencies:
 ```bash
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Run the development server:
-```bash
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173`
+Frontend will run on `http://localhost:5173`
+
+### Testing the Application
+
+1. Open `http://localhost:5173` in your browser
+2. Select a complaint category (e.g., "Road & Traffic Issues")
+3. Describe your complaint: "There's a pothole on Main Street"
+4. The system will guide you through providing location and contact information
+5. Once all information is collected, your complaint will be submitted
+
+The system works without Supabase configuration - complaints are processed and stored in memory for demo purposes.
 
 ## API Endpoints
 
@@ -138,29 +132,30 @@ When all required fields are collected, the system sends a POST request to the c
 ```
 .
 ├── backend/
-│   ├── main.py              # FastAPI application
-│   ├── langgraph_flow.py    # LangGraph workflow
-│   ├── database.py          # Supabase integration
-│   ├── webhook.py           # Webhook sender
+│   ├── main.py              # FastAPI application with chat endpoints
+│   ├── database.py          # Supabase integration (optional)
+│   ├── run.py               # Server startup script
 │   ├── requirements.txt     # Python dependencies
-│   └── .env.example         # Environment variables template
+│   └── env.example          # Environment variables template
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx          # Main React component
-│   │   ├── App.css          # Styles
 │   │   ├── main.jsx         # React entry point
 │   │   └── index.css        # Global styles
 │   ├── index.html
 │   ├── package.json
-│   └── vite.config.js
+│   ├── vite.config.js
+│   └── tailwind.config.js
+├── test_frontend.html       # Standalone test interface
 └── README.md
 ```
 
 ## Notes
 
-- The system uses in-memory session storage for demo purposes. For production, consider using Redis or database-backed sessions.
-- Make sure to configure your Supabase credentials and webhook URL in the `.env` file.
-- The system will continue to work even if the webhook fails, ensuring complaints are still saved to the database.
+- The system works out-of-the-box without any external dependencies for demonstration purposes
+- Supabase integration is optional - add credentials to `backend/.env` for persistent storage
+- The application is configured to run only on localhost for local development
+- All cloud deployment configurations have been removed for clean local development
 
 
 
