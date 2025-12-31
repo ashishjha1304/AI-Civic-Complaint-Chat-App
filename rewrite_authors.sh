@@ -11,3 +11,4 @@ if [ "$GIT_COMMITTER_NAME" = "Ashish Jha" ]; then
     export GIT_COMMITTER_EMAIL="ashishjha1304@outlook.com"
 fi
 ' --tag-name-filter cat -- --branches --tags
+
