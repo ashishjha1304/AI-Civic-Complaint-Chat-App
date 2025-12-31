@@ -4,7 +4,10 @@ from supabase import create_client, Client
 from typing import Optional, Dict, Tuple
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env file from the backend directory
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+env_path = os.path.join(backend_dir, '.env')
+load_dotenv(env_path)
 
 # Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -12,6 +15,13 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 # Webhook configuration
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+
+# Debug: Print configuration status
+print(f"[CONFIG] Loading .env from: {env_path}")
+print(f"[CONFIG] .env file exists: {os.path.exists(env_path)}")
+print(f"[CONFIG] SUPABASE_URL configured: {'Yes' if SUPABASE_URL else 'No'}")
+print(f"[CONFIG] SUPABASE_KEY configured: {'Yes' if SUPABASE_KEY else 'No'}")
+print(f"[CONFIG] WEBHOOK_URL configured: {'Yes' if WEBHOOK_URL else 'No'}")
 
 supabase: Optional[Client] = None
 
