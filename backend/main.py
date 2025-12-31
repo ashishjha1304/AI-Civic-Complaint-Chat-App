@@ -92,28 +92,39 @@ async def submit_complaint_endpoint(complaint_data: dict):
     try:
         from database import save_complaint, validate_complaint_data
 
-        print(f"[SUBMIT] Received complaint submission: {complaint_data}")
+        print(f"[SUBMIT_ENDPOINT] Received complaint submission")
+        print(f"[SUBMIT_ENDPOINT] Payload: {complaint_data}")
 
         # Validate the complaint data
+        print("[SUBMIT_ENDPOINT] Starting validation...")
         is_valid, validation_results = validate_complaint_data(complaint_data)
 
         if not is_valid:
-            print("[VALIDATION FAILED] Complaint data validation failed")
+            print("[SUBMIT_ENDPOINT] VALIDATION FAILED")
+            print(f"[SUBMIT_ENDPOINT] Validation details: {validation_results}")
             return {"success": False, "error": "Validation failed", "details": validation_results}
+
+        print("[SUBMIT_ENDPOINT] Validation passed, attempting database save...")
 
         # Save to database
         result = save_complaint(complaint_data)
 
         if result:
-            print("[SUCCESS] Complaint submitted successfully")
+            print("[SUBMIT_ENDPOINT] SUCCESS: Complaint saved to database")
+            print(f"[SUBMIT_ENDPOINT] Result: {result}")
             return {"success": True, "message": "Complaint submitted successfully"}
         else:
-            print("[ERROR] Failed to save complaint to database")
-            return {"success": False, "error": "Database save failed"}
+            print("[SUBMIT_ENDPOINT] FAILURE: Database save returned None/False")
+            print("[SUBMIT_ENDPOINT] This indicates Supabase credentials issue or database error")
+            return {"success": False, "error": "Database save failed - check Supabase credentials and table schema"}
 
     except Exception as e:
-        print(f"[ERROR] Exception in submit_complaint_endpoint: {e}")
-        return {"success": False, "error": str(e)}
+        error_details = str(e)
+        print(f"[SUBMIT_ENDPOINT] EXCEPTION: {error_details}")
+        print(f"[SUBMIT_ENDPOINT] Full traceback will be logged by Python")
+
+        # Return user-friendly error
+        return {"success": False, "error": "Server error occurred during submission", "details": error_details}
 
 
 @app.post("/reset")

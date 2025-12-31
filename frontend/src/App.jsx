@@ -156,53 +156,76 @@ function App() {
   }
 
   const handleFormSubmit = async (field, value) => {
-    if (loading || (field !== 'contact' && !value.trim())) return
-
-    // Strict validation
-    if (field === 'email' && value) {
-      if (!value.includes('@') || !value.includes('.')) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: 'Invalid email address. Please provide a valid email that contains "@" and "." symbols.'
-        }])
-        return
-      }
-    }
-
-    if (field === 'mobile_number' && value) {
-      // Remove any non-digit characters for validation
-      const cleanNumber = value.replace(/\D/g, '')
-      if (cleanNumber.length < 10) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: 'Invalid mobile number. Please provide a valid mobile number with at least 10 digits.'
-        }])
-        return
-      }
-      // Store the cleaned number
-      value = cleanNumber
-    }
-
-    setLoading(true)
-
-    const fieldLabels = {
-      description: 'Brief explanation',
-      name: 'Name',
-      mobile_number: 'Mobile number',
-      email: 'Email address'
-    }
-
-    // Add user response to chat
-    setMessages(prev => [...prev, {
-      role: 'user',
-      content: `${fieldLabels[field]}: ${value}`
-    }])
-
-    // Store the value
-    setFormData(prev => ({ ...prev, [field]: value }))
-
     try {
+      console.log('[FORM_SUBMIT] Starting submission for field:', field, 'value:', value)
+
+      if (loading) {
+        console.log('[FORM_SUBMIT] Ignoring - already loading')
+        return
+      }
+
+      if (field !== 'contact' && !value?.trim()) {
+        console.log('[FORM_SUBMIT] Ignoring - empty value for field:', field)
+        return
+      }
+
+      // Strict validation with error handling
+      if (field === 'email' && value) {
+        if (!value.includes('@') || !value.includes('.')) {
+          console.log('[VALIDATION] Invalid email:', value)
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: 'Invalid email address. Please provide a valid email that contains "@" and "." symbols.'
+          }])
+          return
+        }
+      }
+
+      if (field === 'mobile_number' && value) {
+        // Remove any non-digit characters for validation
+        const cleanNumber = value.replace(/\D/g, '')
+        if (cleanNumber.length < 10) {
+          console.log('[VALIDATION] Invalid mobile number:', value, 'cleaned:', cleanNumber)
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: 'Invalid mobile number. Please provide a valid mobile number with at least 10 digits.'
+          }])
+          return
+        }
+        // Store the cleaned number
+        value = cleanNumber
+        console.log('[VALIDATION] Mobile number validated and cleaned:', value)
+      }
+
+      setLoading(true)
+      console.log('[FORM_SUBMIT] Loading state set to true')
+
+      const fieldLabels = {
+        description: 'Brief explanation',
+        location: 'Location',
+        name: 'Name',
+        mobile_number: 'Mobile number',
+        email: 'Email address'
+      }
+
+      // Add user response to chat with error handling
+      setMessages(prev => {
+        console.log('[MESSAGES] Adding user message for field:', field)
+        return [...prev, {
+          role: 'user',
+          content: `${fieldLabels[field] || field}: ${value}`
+        }]
+      })
+
+      // Store the value with error handling
+      setFormData(prev => {
+        console.log('[FORM_DATA] Updating field:', field, 'with value:', value)
+        return { ...prev, [field]: value }
+      })
+
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      console.log('[API] Making request to:', `${baseUrl}/chat`)
+
       const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
@@ -215,39 +238,54 @@ function App() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
       const data = await response.json()
+      console.log('[API] Response received:', data)
 
-      // Advance to next step immediately
+      // Advance to next step with error handling
       const steps = ['description', 'location', 'name', 'mobile_number', 'email']
       const currentIndex = steps.indexOf(currentStep)
+
+      console.log('[STEP_TRANSITION] Current step:', currentStep, 'Index:', currentIndex)
 
       if (currentIndex < steps.length - 1) {
         // Move to next step
         const nextStep = steps[currentIndex + 1]
+        console.log('[STEP_TRANSITION] Moving to next step:', nextStep)
+
         setCurrentStep(nextStep)
 
         // Add acknowledgment message from bot
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `Thank you for providing your ${fieldLabels[field].toLowerCase()}. ${getNextQuestionPrompt(nextStep)}`
-        }])
+        const prompt = getNextQuestionPrompt(nextStep)
+        setMessages(prev => {
+          console.log('[MESSAGES] Adding bot acknowledgment for next step:', nextStep)
+          return [...prev, {
+            role: 'assistant',
+            content: `Thank you for providing your ${fieldLabels[field]?.toLowerCase() || field}. ${prompt}`
+          }]
+        })
       } else {
         // Final step - submit complaint
+        console.log('[STEP_TRANSITION] Final step reached, submitting complaint')
         await submitComplaint()
       }
 
-      // Clear the form field
-      setFormData(prev => ({ ...prev, [field]: '' }))
+      // Clear the form field with error handling
+      setFormData(prev => {
+        console.log('[FORM_DATA] Clearing field:', field)
+        return { ...prev, [field]: '' }
+      })
+
     } catch (error) {
-      console.error('Error:', error)
+      console.error('[FORM_SUBMIT_ERROR] Exception occurred:', error)
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.'
       }])
     } finally {
+      console.log('[FORM_SUBMIT] Setting loading to false')
       setLoading(false)
     }
   }
@@ -255,17 +293,23 @@ function App() {
   // Submit complaint to database
   const submitComplaint = async () => {
     try {
+      console.log('[SUBMIT_COMPLAINT] Starting complaint submission')
+
       const complaintData = {
-        citizen_name: formData.name,
-        location: formData.location,
+        citizen_name: formData?.name || '',
+        location: formData?.location || '',
         issue_type: getSelectedCategoryValue(),
-        complaint_description: formData.description,
-        mobile_number: formData.mobile_number,
-        email: formData.email
+        complaint_description: formData?.description || '',
+        mobile_number: formData?.mobile_number || '',
+        email: formData?.email || ''
       }
+
+      console.log('[SUBMIT_COMPLAINT] Prepared data:', complaintData)
 
       // Send to backend for database insertion
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      console.log('[SUBMIT_COMPLAINT] Making API call to:', `${baseUrl}/submit-complaint`)
+
       const response = await fetch(`${baseUrl}/submit-complaint`, {
         method: 'POST',
         headers: {
@@ -277,24 +321,41 @@ function App() {
         }),
       })
 
+      console.log('[SUBMIT_COMPLAINT] API response status:', response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log('[SUBMIT_COMPLAINT] Success response:', result)
+
         setCurrentStep(null)
         setComplaintCompleted(true)
         setShowCategorySelection(false)
 
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: "Thank you! Your complaint has been recorded successfully. Our team will review it and get back to you."
-        }])
+        setMessages(prev => {
+          console.log('[SUBMIT_COMPLAINT] Adding success message to chat')
+          return [...prev, {
+            role: 'assistant',
+            content: "Thank you! Your complaint has been recorded successfully. Our team will review it and get back to you."
+          }]
+        })
       } else {
-        throw new Error('Failed to submit complaint')
+        const errorText = await response.text()
+        console.error('[SUBMIT_COMPLAINT] API error:', response.status, errorText)
+        throw new Error(`Submission failed: ${response.status} - ${errorText}`)
       }
     } catch (error) {
-      console.error('Error submitting complaint:', error)
+      console.error('[SUBMIT_COMPLAINT] Exception during submission:', error)
+
+      // Don't crash the UI - show error message instead
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, there was an error submitting your complaint. Please try again.'
+        content: 'Sorry, there was an error submitting your complaint. Please try again or contact support if the problem persists.'
       }])
+
+      // Allow user to retry by going back to the last step
+      setTimeout(() => {
+        setCurrentStep('email')
+      }, 2000)
     }
   }
 
@@ -632,7 +693,7 @@ function App() {
               <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-gradient-to-b from-white/50 via-indigo-50/20 to-gray-50/30 border-t border-indigo-100/30 relative overflow-hidden">
                 {/* Subtle gradient accent */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-200/50 to-transparent"></div>
-                
+
                 <div className="max-w-2xl mx-auto animate-slide-up relative z-10">
                   {currentStep === 'description' && (
                     <div className="space-y-4 sm:space-y-6">
@@ -670,41 +731,66 @@ function App() {
                     </div>
                   )}
 
-                  {currentStep === 'mobile_number' && (
-                    <div className="space-y-4 sm:space-y-6">
-                      <div className="text-center mb-6 sm:mb-8">
-                        <div className="relative inline-block mb-4">
-                          <div className="absolute inset-0 bg-cyan-200 rounded-full blur-xl opacity-50"></div>
-                          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-100 to-blue-100 shadow-lg">
-                            <span className="text-3xl">📱</span>
+                  {currentStep === 'mobile_number' && (() => {
+                    console.log('[RENDER] Rendering mobile_number step, formData:', formData)
+                    try {
+                      return (
+                        <div className="space-y-4 sm:space-y-6">
+                          <div className="text-center mb-6 sm:mb-8">
+                            <div className="relative inline-block mb-4">
+                              <div className="absolute inset-0 bg-cyan-200 rounded-full blur-xl opacity-50"></div>
+                              <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-100 to-blue-100 shadow-lg">
+                                <span className="text-3xl">📱</span>
+                              </div>
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">Mobile Number</h3>
+                            <p className="text-sm text-gray-600 font-medium">Please provide your mobile number</p>
                           </div>
+                          <input
+                            type="tel"
+                            value={formData?.mobile_number || ''}
+                            onChange={(e) => {
+                              console.log('[INPUT] Mobile number changed to:', e.target.value)
+                              setFormData(prev => ({ ...prev, mobile_number: e.target.value }))
+                            }}
+                            placeholder="e.g., +1234567890 or 1234567890"
+                            disabled={loading}
+                            className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
+                          />
+                          <button
+                            onClick={() => {
+                              console.log('[BUTTON] Mobile number submit clicked, value:', formData?.mobile_number)
+                              handleFormSubmit('mobile_number', formData?.mobile_number || '')
+                            }}
+                            disabled={loading || !formData?.mobile_number?.trim()}
+                            className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+                          >
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                              <span>Continue to Email</span>
+                              <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                              </svg>
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </button>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Mobile Number</h3>
-                        <p className="text-sm text-gray-600 font-medium">Please provide your mobile number</p>
-                      </div>
-                      <input
-                        type="tel"
-                        value={formData.mobile_number}
-                        onChange={(e) => setFormData(prev => ({ ...prev, mobile_number: e.target.value }))}
-                        placeholder="e.g., +1234567890 or 1234567890"
-                        disabled={loading}
-                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
-                      />
-              <button
-                        onClick={() => handleFormSubmit('mobile_number', formData.mobile_number)}
-                        disabled={loading || !formData.mobile_number.trim()}
-                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-              >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <span>Continue to Email</span>
-                          <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
-                    </div>
-                  )}
+                      )
+                    } catch (error) {
+                      console.error('[RENDER_ERROR] Error rendering mobile_number form:', error)
+                      return (
+                        <div className="text-center py-8">
+                          <div className="text-red-600 font-semibold mb-2">Form Error</div>
+                          <div className="text-gray-600 text-sm mb-4">There was an issue loading this form step.</div>
+                          <button
+                            onClick={() => window.location.reload()}
+                            className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+                          >
+                            Refresh Page
+                          </button>
+                        </div>
+                      )
+                    }
+                  })()}
 
                   {currentStep === 'email' && (
                     <div className="space-y-4 sm:space-y-6">
