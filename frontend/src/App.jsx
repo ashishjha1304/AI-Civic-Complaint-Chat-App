@@ -115,11 +115,7 @@ function App() {
 
     try {
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-      const apiUrl = `${baseUrl}/chat`
-      console.log('API URL:', apiUrl)
-      console.log('API Base URL:', import.meta.env.VITE_API_URL)
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,9 +131,15 @@ function App() {
       }
 
       const data = await response.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+
+      // Immediately move to description step and show acknowledgment
       setShowCategorySelection(false)
       setCurrentStep('description')
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "Thank you for selecting that category. Please provide a brief description of the issue you're experiencing."
+      }])
     } catch (error) {
       console.error('Error:', error)
       setMessages(prev => [...prev, {
@@ -162,6 +164,7 @@ function App() {
       phone: 'Phone'
     }
 
+    // Add user response to chat
     setMessages(prev => [...prev, {
       role: 'user',
       content: `${fieldLabels[field]}: ${value}`
@@ -185,14 +188,32 @@ function App() {
       }
 
       const data = await response.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
 
+      // Advance to next step immediately (don't wait for backend response)
       const steps = ['description', 'location', 'name']
       const currentIndex = steps.indexOf(currentStep)
+
       if (currentIndex < steps.length - 1) {
-        setCurrentStep(steps[currentIndex + 1])
+        // Move to next step
+        const nextStep = steps[currentIndex + 1]
+        setCurrentStep(nextStep)
+
+        // Add acknowledgment message from bot
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `Thank you for providing your ${fieldLabels[field].toLowerCase()}. ${getNextQuestionPrompt(nextStep)}`
+        }])
       } else {
+        // Final step - submit complaint
         setCurrentStep(null)
+        setComplaintCompleted(true)
+        setShowCategorySelection(false)
+
+        // Add success message
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "Thank you! Your complaint has been recorded and submitted. We will look into this issue and get back to you soon."
+        }])
       }
 
       setFormData(prev => ({ ...prev, [field]: '' }))
@@ -205,6 +226,15 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Helper function to get the next question prompt
+  const getNextQuestionPrompt = (nextStep) => {
+    const prompts = {
+      location: "Now, please provide the location where this issue is occurring.",
+      name: "Finally, please provide your name so we can register this complaint."
+    }
+    return prompts[nextStep] || ""
   }
 
   const sendMessage = async () => {

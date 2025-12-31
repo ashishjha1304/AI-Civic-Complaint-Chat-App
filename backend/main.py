@@ -5,17 +5,16 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 
-# Simple fallback for process_message without langgraph
+# Stateless message processor - let frontend control conversation flow
 async def process_message(message: str, session_id: str = "default") -> str:
-    """Simple message processor fallback"""
-    if "pothole" in message.lower():
-        return "I understand you have a pothole issue. Can you please provide the location of this pothole?"
-    elif "location" in message.lower() or "address" in message.lower():
-        return "Thank you for providing the location. What's your name so I can register this complaint?"
-    elif any(word in message.lower() for word in ["john", "jane", "name"]):
-        return "Thank you! Your complaint has been registered. We'll look into this issue."
-    else:
-        return "I understand you want to file a complaint. Can you please describe the issue you're facing?"
+    """
+    Simple stateless processor that acknowledges input.
+    Conversation flow is managed entirely by the frontend.
+    Backend responses are generic and don't determine conversation flow.
+    """
+    # Generic acknowledgment for all inputs
+    # Frontend manages the actual conversation logic
+    return "Information received. Processing your request..."
 
 load_dotenv()
 
