@@ -10,6 +10,9 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
+# Webhook configuration
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+
 supabase: Optional[Client] = None
 
 # In-memory session storage (for demo purposes)
@@ -175,6 +178,52 @@ def get_supabase_client() -> Optional[Client]:
     return supabase
 
 
+def send_webhook_notification(complaint_data: Dict, complaint_id: str = None) -> bool:
+    """Send webhook notification after complaint submission"""
+    if not WEBHOOK_URL:
+        print("[WEBHOOK] Webhook URL not configured, skipping notification")
+        return True  # Not an error, just not configured
+
+    try:
+        # Prepare webhook payload
+        webhook_payload = {
+            "event": "complaint_submitted",
+            "timestamp": complaint_data.get("created_at", "2024-01-01T00:00:00Z"),
+            "complaint": {
+                "id": complaint_id,
+                "citizen_name": complaint_data.get("citizen_name"),
+                "location": complaint_data.get("location"),
+                "issue_type": complaint_data.get("issue_type"),
+                "complaint_description": complaint_data.get("complaint_description"),
+                "mobile_number": complaint_data.get("mobile_number"),
+                "email": complaint_data.get("email")
+            }
+        }
+
+        print(f"[WEBHOOK] Sending notification to: {WEBHOOK_URL}")
+        print(f"[WEBHOOK] Payload: {webhook_payload}")
+
+        # Send webhook request
+        import requests
+        response = requests.post(
+            WEBHOOK_URL,
+            json=webhook_payload,
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+
+        if response.status_code >= 200 and response.status_code < 300:
+            print("[WEBHOOK] Notification sent successfully")
+            return True
+        else:
+            print(f"[WEBHOOK] Failed to send notification. Status: {response.status_code}, Response: {response.text}")
+            return False
+
+    except Exception as e:
+        print(f"[WEBHOOK] Exception during webhook notification: {e}")
+        return False
+
+
 def save_complaint(complaint_data: Dict):
     """Save complaint to Supabase database"""
     try:
@@ -226,6 +275,22 @@ def save_complaint(complaint_data: Dict):
         print(f"   Description: {db_data['complaint_description'][:50]}...")
         print(f"   Mobile: {db_data['mobile_number']}")
         print(f"   Email: {db_data['email']}")
+
+        # Send webhook notification after successful database save
+        try:
+            # Extract the complaint ID from the result if available
+            complaint_id = None
+            if hasattr(result, 'data') and result.data:
+                complaint_id = result.data[0].get('id') if isinstance(result.data, list) and len(result.data) > 0 else None
+
+            webhook_success = send_webhook_notification(db_data, complaint_id)
+            if webhook_success:
+                print("[SUCCESS] Webhook notification sent successfully")
+            else:
+                print("[WARNING] Webhook notification failed, but complaint was saved")
+        except Exception as webhook_error:
+            print(f"[WARNING] Webhook notification failed: {webhook_error}")
+            print("[INFO] Complaint was still saved successfully to database")
 
         return result
 

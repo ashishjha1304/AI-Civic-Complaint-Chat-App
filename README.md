@@ -116,16 +116,32 @@ The system asks for missing information one field at a time and only submits the
 
 ## Webhook Integration
 
-When all required fields are collected, the system sends a POST request to the configured webhook URL with the following payload:
+When a complaint is successfully submitted, the system sends a POST request to the configured webhook URL with the following payload:
 
 ```json
 {
-  "citizen_name": "John Doe",
-  "location": "123 Main Street",
-  "complaint": "There's a large pothole causing traffic issues",
-  "issue_type": "road"
+  "event": "complaint_submitted",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "complaint": {
+    "id": "uuid-generated-id",
+    "citizen_name": "John Doe",
+    "location": "123 Main Street, Downtown Area",
+    "issue_type": "road_traffic",
+    "complaint_description": "There is a large pothole on Main Street causing traffic issues",
+    "mobile_number": "9876543210",
+    "email": "john.doe@example.com"
+  }
 }
 ```
+
+### Webhook Configuration
+
+Add to your `backend/.env` file:
+```env
+WEBHOOK_URL=https://your-webhook-endpoint.com/webhook
+```
+
+If the webhook fails to send, the complaint is still saved to the database. Webhook failures are logged but don't prevent successful submissions.
 
 ## Project Structure
 
