@@ -59,7 +59,7 @@ function App() {
 
   const resetComplaint = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-8yd1qv6b4-ashish-jhas-projects-ff68ec28.vercel.app'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-e6ql7s9fj-ashish-jhas-projects-ff68ec28.vercel.app'
       await fetch(`${baseUrl}/reset`, {
         method: 'POST',
         headers: {
@@ -114,10 +114,10 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: category }])
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-8yd1qv6b4-ashish-jhas-projects-ff68ec28.vercel.app'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-e6ql7s9fj-ashish-jhas-projects-ff68ec28.vercel.app'
       const apiUrl = `${baseUrl}/chat`
       console.log('API URL:', apiUrl)
-      console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
+      console.log('API Base URL:', import.meta.env.VITE_API_URL)
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -168,7 +168,7 @@ function App() {
     }])
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-8yd1qv6b4-ashish-jhas-projects-ff68ec28.vercel.app'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-e6ql7s9fj-ashish-jhas-projects-ff68ec28.vercel.app'
       const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
@@ -218,7 +218,7 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-8yd1qv6b4-ashish-jhas-projects-ff68ec28.vercel.app'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://backend-e6ql7s9fj-ashish-jhas-projects-ff68ec28.vercel.app'
       const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
