@@ -17,6 +17,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [formData, setFormData] = useState({
     description: '',
+    location: '',
     name: '',
     mobile_number: '',
     email: ''
@@ -78,6 +79,7 @@ function App() {
       setSelectedCategory(null)
       setFormData({
         description: '',
+        location: '',
         name: '',
         mobile_number: '',
         email: ''
@@ -98,6 +100,7 @@ function App() {
       setSelectedCategory(null)
       setFormData({
         description: '',
+        location: '',
         name: '',
         mobile_number: '',
         email: ''
@@ -155,21 +158,29 @@ function App() {
   const handleFormSubmit = async (field, value) => {
     if (loading || (field !== 'contact' && !value.trim())) return
 
-    // Basic validation
-    if (field === 'email' && value && !value.includes('@')) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Please provide a valid email address that includes the "@" symbol.'
-      }])
-      return
+    // Strict validation
+    if (field === 'email' && value) {
+      if (!value.includes('@') || !value.includes('.')) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: 'Invalid email address. Please provide a valid email that contains "@" and "." symbols.'
+        }])
+        return
+      }
     }
 
-    if (field === 'mobile_number' && (!value || value.trim().length < 3)) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Please provide a valid mobile number with at least 3 digits.'
-      }])
-      return
+    if (field === 'mobile_number' && value) {
+      // Remove any non-digit characters for validation
+      const cleanNumber = value.replace(/\D/g, '')
+      if (cleanNumber.length < 10) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: 'Invalid mobile number. Please provide a valid mobile number with at least 10 digits.'
+        }])
+        return
+      }
+      // Store the cleaned number
+      value = cleanNumber
     }
 
     setLoading(true)
@@ -210,7 +221,7 @@ function App() {
       const data = await response.json()
 
       // Advance to next step immediately
-      const steps = ['description', 'name', 'mobile_number', 'email']
+      const steps = ['description', 'location', 'name', 'mobile_number', 'email']
       const currentIndex = steps.indexOf(currentStep)
 
       if (currentIndex < steps.length - 1) {
@@ -246,10 +257,11 @@ function App() {
     try {
       const complaintData = {
         citizen_name: formData.name,
-        email: formData.email,
-        mobile_number: formData.mobile_number,
+        location: formData.location,
         issue_type: getSelectedCategoryValue(),
-        complaint_description: formData.description
+        complaint_description: formData.description,
+        mobile_number: formData.mobile_number,
+        email: formData.email
       }
 
       // Send to backend for database insertion
@@ -294,8 +306,9 @@ function App() {
   // Helper function to get the next question prompt
   const getNextQuestionPrompt = (nextStep) => {
     const prompts = {
-      name: "Now, please provide your full name.",
-      mobile_number: "Next, please provide your mobile number.",
+      location: "Now, please provide the location where this issue is occurring.",
+      name: "Next, please provide your full name.",
+      mobile_number: "Now, please provide your mobile number.",
       email: "Finally, please provide your email address."
     }
     return prompts[nextStep] || ""
@@ -723,6 +736,42 @@ function App() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           <span>Submit Complaint</span>
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+                    </div>
+                  )}
+
+                  {currentStep === 'location' && (
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="text-center mb-6 sm:mb-8">
+                        <div className="relative inline-block mb-4">
+                          <div className="absolute inset-0 bg-green-200 rounded-full blur-xl opacity-50"></div>
+                          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 shadow-lg">
+                            <span className="text-3xl">📍</span>
+                          </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Location</h3>
+                        <p className="text-sm text-gray-600 font-medium">Where is this issue located?</p>
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                        placeholder="e.g., 123 Main Street, Downtown Area"
+                        disabled={loading}
+                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
+                      />
+              <button
+                        onClick={() => handleFormSubmit('location', formData.location)}
+                        disabled={loading || !formData.location.trim()}
+                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+              >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <span>Continue to Name</span>
+                          <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>

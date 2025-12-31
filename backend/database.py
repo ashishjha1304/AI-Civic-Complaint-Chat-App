@@ -105,6 +105,18 @@ def validate_issue_type(issue_type: str) -> Tuple[bool, str]:
         return False, f"Issue type must be one of: {', '.join(valid_types)}"
 
 
+def validate_location(location: str) -> Tuple[bool, str]:
+    """Validate location - basic validation"""
+    if not location or not isinstance(location, str):
+        return False, "Location is required"
+
+    location = location.strip()
+    if len(location) < 3:
+        return False, "Location must be at least 3 characters long"
+
+    return True, "Valid location"
+
+
 def validate_complaint_data(complaint_data: Dict) -> Tuple[bool, Dict[str, str]]:
     """Validate all complaint data fields"""
     validation_results = {}
@@ -113,6 +125,7 @@ def validate_complaint_data(complaint_data: Dict) -> Tuple[bool, Dict[str, str]]
     # Required fields
     required_fields = {
         'citizen_name': validate_citizen_name,
+        'location': validate_location,
         'email': validate_email,
         'mobile_number': validate_mobile_number,
         'complaint_description': validate_complaint_description,
@@ -196,10 +209,11 @@ def save_complaint(complaint_data: Dict):
         # Insert data with exact column names
         insert_data = {
             "citizen_name": db_data["citizen_name"],
-            "email": db_data["email"],
-            "mobile_number": db_data["mobile_number"],
+            "location": db_data["location"],
             "issue_type": db_data["issue_type"],
-            "complaint_description": db_data["complaint_description"]
+            "complaint_description": db_data["complaint_description"],
+            "mobile_number": db_data["mobile_number"],
+            "email": db_data["email"]
         }
 
         print(f"[INSERT] Attempting to insert: {insert_data}")
@@ -207,10 +221,11 @@ def save_complaint(complaint_data: Dict):
 
         print("[SUCCESS] Complaint saved successfully to Supabase!")
         print(f"   Citizen: {db_data['citizen_name']}")
-        print(f"   Email: {db_data['email']}")
-        print(f"   Mobile: {db_data['mobile_number']}")
+        print(f"   Location: {db_data['location']}")
         print(f"   Issue: {db_data['issue_type']}")
         print(f"   Description: {db_data['complaint_description'][:50]}...")
+        print(f"   Mobile: {db_data['mobile_number']}")
+        print(f"   Email: {db_data['email']}")
 
         return result
 
