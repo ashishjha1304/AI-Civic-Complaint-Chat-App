@@ -386,11 +386,7 @@ function App() {
                         </div>
                       </div>
                     ) : (
-                      <p className={`whitespace-pre-wrap font-medium break-words ${
-                        idx === 0 && msg.role === 'assistant' 
-                          ? 'text-base sm:text-lg leading-relaxed sm:leading-loose' 
-                          : 'text-sm leading-relaxed'
-                      }`}>{msg.content}</p>
+                      <p className="whitespace-pre-wrap font-medium break-words text-base sm:text-lg leading-relaxed sm:leading-loose">{msg.content}</p>
                     )}
                   </div>
                   {msg.role === 'user' && (
