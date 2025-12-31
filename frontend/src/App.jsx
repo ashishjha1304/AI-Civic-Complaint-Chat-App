@@ -218,10 +218,7 @@ function App() {
       })
 
       // Store the value with error handling
-      setFormData(prev => {
-        console.log('[FORM_DATA] Updating field:', field, 'with value:', value)
-        return { ...prev, [field]: value }
-      })
+      setFormData(prev => ({ ...prev, [field]: value }))
 
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
       console.log('[API] Making request to:', `${baseUrl}/chat`)
@@ -270,13 +267,19 @@ function App() {
         // Final step - submit complaint
         console.log('[STEP_TRANSITION] Final step reached, submitting complaint')
         await submitComplaint()
+
+        // Clear all form data after successful submission
+        setFormData({
+          description: '',
+          location: '',
+          name: '',
+          mobile_number: '',
+          email: ''
+        })
       }
 
-      // Clear the form field with error handling
-      setFormData(prev => {
-        console.log('[FORM_DATA] Clearing field:', field)
-        return { ...prev, [field]: '' }
-      })
+      // Don't clear individual fields during the process - we need them for final submission
+      // Fields are only cleared after successful complaint submission
 
     } catch (error) {
       console.error('[FORM_SUBMIT_ERROR] Exception occurred:', error)
@@ -323,9 +326,11 @@ function App() {
 
       console.log('[SUBMIT_COMPLAINT] API response status:', response.status)
 
-      if (response.ok) {
-        const result = await response.json()
-        console.log('[SUBMIT_COMPLAINT] Success response:', result)
+      const result = await response.json()
+      console.log('[SUBMIT_COMPLAINT] API response:', result)
+
+      if (response.ok && result.success) {
+        console.log('[SUBMIT_COMPLAINT] Complaint successfully saved to database')
 
         setCurrentStep(null)
         setComplaintCompleted(true)
@@ -339,9 +344,46 @@ function App() {
           }]
         })
       } else {
-        const errorText = await response.text()
-        console.error('[SUBMIT_COMPLAINT] API error:', response.status, errorText)
-        throw new Error(`Submission failed: ${response.status} - ${errorText}`)
+        // Handle both HTTP errors and backend validation errors
+        console.error('[SUBMIT_COMPLAINT] Submission failed')
+        console.error('[SUBMIT_COMPLAINT] HTTP status:', response.status)
+        console.error('[SUBMIT_COMPLAINT] Result:', result)
+
+        // Show specific validation errors instead of generic message
+        let errorMessage = 'Sorry, there was an error submitting your complaint. '
+
+        if (result.details) {
+          console.error('[SUBMIT_COMPLAINT] Validation details:', result.details)
+
+          // Collect specific validation errors
+          const validationErrors = []
+          for (const [field, info] of Object.entries(result.details)) {
+            if (!info.valid) {
+              validationErrors.push(`${field}: ${info.message}`)
+            }
+          }
+
+          if (validationErrors.length > 0) {
+            errorMessage += 'Please fix the following issues:\n' + validationErrors.join('\n')
+          }
+        } else if (result.error) {
+          errorMessage += result.error
+        } else {
+          errorMessage += 'Please check your information and try again.'
+        }
+
+        // Don't throw error - show the message directly
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: errorMessage
+        }])
+
+        // Allow user to retry by going back to the last step
+        setTimeout(() => {
+          setCurrentStep('email')
+        }, 3000)
+
+        return // Don't continue to success handling
       }
     } catch (error) {
       console.error('[SUBMIT_COMPLAINT] Exception during submission:', error)
@@ -386,6 +428,14 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
     try {
+      // If we're in a step-by-step process, handle the input directly
+      if (currentStep) {
+        // Store the user input in formData and move to next step
+        await handleFormSubmit(currentStep, userMessage)
+        return
+      }
+
+      // Otherwise, send to chat endpoint for general conversation
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
       const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
@@ -715,19 +765,6 @@ function App() {
                         rows="5"
                         className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 resize-none shadow-sm hover:shadow-md"
                       />
-              <button
-                        onClick={() => handleFormSubmit('description', formData.description)}
-                        disabled={loading || formData.description.length < 10}
-                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-              >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <span>Continue to Location</span>
-                          <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
                     </div>
                   )}
 
@@ -757,22 +794,6 @@ function App() {
                             disabled={loading}
                             className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                           />
-                          <button
-                            onClick={() => {
-                              console.log('[BUTTON] Mobile number submit clicked, value:', formData?.mobile_number)
-                              handleFormSubmit('mobile_number', formData?.mobile_number || '')
-                            }}
-                            disabled={loading || !formData?.mobile_number?.trim()}
-                            className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-                          >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                              <span>Continue to Email</span>
-                              <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                              </svg>
-                            </span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          </button>
                         </div>
                       )
                     } catch (error) {
@@ -812,19 +833,6 @@ function App() {
                         disabled={loading}
                         className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                       />
-              <button
-                        onClick={() => handleFormSubmit('email', formData.email)}
-                        disabled={loading || !formData.email.trim() || !formData.email.includes('@')}
-                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-              >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Submit Complaint</span>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
                     </div>
                   )}
 
@@ -848,19 +856,6 @@ function App() {
                         disabled={loading}
                         className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                       />
-              <button
-                        onClick={() => handleFormSubmit('location', formData.location)}
-                        disabled={loading || !formData.location.trim()}
-                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-              >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <span>Continue to Name</span>
-                          <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
                     </div>
                   )}
 
@@ -884,19 +879,6 @@ function App() {
                         disabled={loading}
                         className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                       />
-              <button
-                        onClick={() => handleFormSubmit('name', formData.name)}
-                        disabled={loading || formData.name.length < 2}
-                        className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
-              >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Submit Complaint</span>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
                     </div>
                   )}
             </div>

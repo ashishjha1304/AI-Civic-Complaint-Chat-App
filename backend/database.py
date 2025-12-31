@@ -74,10 +74,15 @@ def validate_mobile_number(phone: str) -> Tuple[bool, str]:
     # Remove common separators for validation
     clean_phone = re.sub(r'[\s\-\(\)\.]', '', phone)
 
+    # Check minimum length (at least 10 digits)
+    digits_only = clean_phone.replace('+', '')
+    if len(digits_only) < 10:
+        return False, "Mobile number must be at least 10 digits long"
+
     # Allow flexible phone number formats
-    if re.match(r'^(\+\d{1,3})?\d{3,15}$', clean_phone):
+    if re.match(r'^(\+\d{1,3})?\d{10,15}$', clean_phone):
         # Should not be all same digits
-        if len(set(clean_phone.replace('+', ''))) <= 1 and len(clean_phone.replace('+', '')) > 3:
+        if len(set(digits_only)) <= 1 and len(digits_only) > 3:
             return False, "Please provide a valid phone number"
         return True, "Valid mobile number"
 

@@ -96,12 +96,9 @@ async def submit_complaint_endpoint(complaint_data: dict):
         print(f"[SUBMIT_ENDPOINT] Payload: {complaint_data}")
 
         # Validate the complaint data
-        print("[SUBMIT_ENDPOINT] Starting validation...")
         is_valid, validation_results = validate_complaint_data(complaint_data)
 
         if not is_valid:
-            print("[SUBMIT_ENDPOINT] VALIDATION FAILED")
-            print(f"[SUBMIT_ENDPOINT] Validation details: {validation_results}")
             return {"success": False, "error": "Validation failed", "details": validation_results}
 
         print("[SUBMIT_ENDPOINT] Validation passed, attempting database save...")
