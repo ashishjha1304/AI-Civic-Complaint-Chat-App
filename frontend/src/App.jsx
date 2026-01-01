@@ -60,7 +60,7 @@ function App() {
 
   const resetComplaint = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ai-civic-complaint-chat-app.onrender.com'
       await fetch(`${baseUrl}/reset`, {
         method: 'POST',
         headers: {
@@ -117,7 +117,7 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: category }])
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ai-civic-complaint-chat-app.onrender.com'
       const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
@@ -220,7 +220,7 @@ function App() {
       // Store the value with error handling
       setFormData(prev => ({ ...prev, [field]: value }))
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ai-civic-complaint-chat-app.onrender.com'
       console.log('[API] Making request to:', `${baseUrl}/chat`)
 
       const response = await fetch(`${baseUrl}/chat`, {
@@ -310,7 +310,7 @@ function App() {
       console.log('[SUBMIT_COMPLAINT] Prepared data:', complaintData)
 
       // Send to backend for database insertion
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ai-civic-complaint-chat-app.onrender.com'
       console.log('[SUBMIT_COMPLAINT] Making API call to:', `${baseUrl}/submit-complaint`)
 
       const response = await fetch(`${baseUrl}/submit-complaint`, {
@@ -436,7 +436,7 @@ function App() {
       }
 
       // Otherwise, send to chat endpoint for general conversation
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const baseUrl = import.meta.env.VITE_API_URL || 'https://ai-civic-complaint-chat-app.onrender.com'
       const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
