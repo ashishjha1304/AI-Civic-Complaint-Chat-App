@@ -524,26 +524,26 @@ function App() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-5 pb-4 sm:pb-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl blur-sm opacity-50"></div>
-                <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                  <span className="text-2xl">🏙️</span>
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <span className="text-xl sm:text-2xl">🏙️</span>
                 </div>
               </div>
             <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                   Smart City Complaint Assistant
                 </h1>
-                <p className="text-sm text-gray-600 mt-1 font-medium">Your voice matters. Report issues easily.</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 font-medium">Your voice matters. Report issues easily.</p>
               </div>
             </div>
             <button
               onClick={resetComplaint}
-              className="group relative px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-300 flex items-center gap-2 overflow-hidden"
+              className="group relative px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs sm:text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-300 flex items-center gap-1 sm:gap-2 overflow-hidden"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                <span className="text-lg">➕</span>
+              <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+                <span className="text-base sm:text-lg">➕</span>
                 <span>New Complaint</span>
               </span>
               <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -685,7 +685,7 @@ function App() {
                 
                 <div className="mb-6 sm:mb-8 text-center relative z-10">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 mb-4 shadow-lg">
-                    <span className="text-3xl">👆</span>
+                    <span className="text-3xl">👇</span>
                   </div>
                   <p className="text-base font-semibold text-gray-900 mb-2">
                     Select a category to begin filing your complaint
