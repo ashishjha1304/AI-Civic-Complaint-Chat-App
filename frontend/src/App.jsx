@@ -184,11 +184,11 @@ function App() {
       if (field === 'mobile_number' && value) {
         // Remove any non-digit characters for validation
         const cleanNumber = value.replace(/\D/g, '')
-        if (cleanNumber.length < 10) {
+        if (cleanNumber.length !== 10) {
           console.log('[VALIDATION] Invalid mobile number:', value, 'cleaned:', cleanNumber)
           setMessages(prev => [...prev, {
             role: 'assistant',
-            content: 'Invalid mobile number. Please provide a valid mobile number with at least 10 digits.'
+            content: 'Please enter a valid 10-digit mobile number.'
           }])
           return
         }
@@ -522,7 +522,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-5 pb-4 sm:pb-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -553,7 +553,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="pt-24 sm:pt-28 pb-6 sm:pb-8 px-4 sm:px-6 lg:px-8">
+      <main className="pt-40 sm:pt-28 pb-6 sm:pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Chat Container */}
           <div className="bg-white/70 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-2xl border border-white/50 overflow-hidden relative">
@@ -598,13 +598,13 @@ function App() {
                           </svg>
               </div>
                         <div className="flex-1">
-                          <p className="text-sm sm:text-base leading-relaxed font-medium text-gray-800 break-words whitespace-pre-wrap">
+                          <p className="text-sm sm:text-base leading-5 sm:leading-relaxed font-medium text-gray-800 break-words whitespace-pre-wrap">
                 {msg.content}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap font-medium break-words text-base sm:text-lg leading-relaxed sm:leading-loose">{msg.content}</p>
+                      <p className="whitespace-pre-wrap font-medium break-words text-sm sm:text-lg leading-5 sm:leading-loose">{msg.content}</p>
                     )}
                   </div>
                   {msg.role === 'user' && (
@@ -803,7 +803,7 @@ function App() {
                               console.log('[INPUT] Mobile number changed to:', e.target.value)
                               setFormData(prev => ({ ...prev, mobile_number: e.target.value }))
                             }}
-                            placeholder="e.g., +1234567890 or 1234567890"
+                            placeholder="9869374550"
                             disabled={loading}
                             className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 bg-white/90 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                           />
@@ -940,10 +940,10 @@ function App() {
                         className="group relative w-full px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] overflow-hidden"
               >
                         <span className="relative z-10 flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <span>Continue to Mobile Number</span>
+                          <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
-                          <span>Submit Complaint</span>
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
